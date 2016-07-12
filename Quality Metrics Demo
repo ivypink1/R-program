@@ -1,4 +1,5 @@
-# histogram of judgements/collection and normal distribution
+# This is for Crowdsourcing Quality Dashboard Demo-Metrics Calculation
+
 library(e1071)
 library(data.table)
 library(plyr)
