@@ -1,0 +1,43 @@
+# histogram of judgements/collection and normal distribution
+library(e1071)
+library(data.table)
+library(plyr)
+library(caret)
+
+n <-read.csv("/Users/sma76/Desktop/crowd_sourcing/062216-Baseline-GHS/601_crowdsource_judements.csv", header=TRUE)
+n2 <-read.csv("/Users/sma76/Desktop/crowd_sourcing/062216-Baseline-GHS/Collection 601 6.22.2016/Delivery Collection 601 06.22.2016.csv", header=TRUE)
+n3 <-read.csv("/Users/sma76/Desktop/crowd_sourcing/062216-Baseline-GHS/Collection 601 6.22.2016/REF  Wren 51st REF Set 06.22.2016.csv", header=TRUE)
+n4 <-read.csv("/Users/sma76/Desktop/crowd_sourcing/062216-Baseline-GHS/Collection 601 6.22.2016/Disagreement Collection 601 06.22.2016.csv", header=TRUE)
+
+#conversion data type
+n3$ref_set_rating =as.factor(n3$ref_set_rating)
+levels(n3$ref_set_rating) = c(levels(n3$ref_set_rating),"0")
+n3$member_rating =as.factor(n3$member_rating)
+n3$member_id <-as.factor(n3$member_id)
+
+#convert the character rating into numeric
+
+
+#overall collection profile: skewness, accuracy, IRR
+skewness(n$rating_score)
+cm_overall <-confusionMatrix(n3$member_rating, n3$ref_set_rating)
+
+
+#individial profile metrics: skewness, mean, number of HITs, accuracy (merge the ddply function)
+skewness_judge <-ddply(n2,.(n2$judge_id), function(s) skewness(s$Rating.Score, na.rm=TRUE))
+mean_judge <- ddply(n2,.(n2$judge_id), function(s) mean(s$Rating.Score, na.rm=TRUE))
+judge_number <-ddply(n2,.(n2$judge_id), nrow)
+cm_by_member <- by(n3, n3$member_id, function(s) confusionMatrix(n3$member_rating, n3$ref_set_rating))
+
+
+# join metrics table by judge_id
+metrics_1 <- merge(skewness_judge, judge_number, by = "n2.judge_id", all.x = TRUE)
+metrics_1$skewness <-skewness(n$rating_score)
+metrics_1$mean <-mean(n$rating_score)
+metrics_total <-merge(metrics_1, mean_judge, by = "n2.judge_id", all.x=TRUE)
+
+# graphical plot (histogram and boxplot)
+hist(n$rating_score)
+hist_judge <-by(n2, n2$judge_id, function(s) hist(s$Rating.Score))
+
+
